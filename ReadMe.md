@@ -3,8 +3,8 @@
 This example shows how to package a mock algorithm for use with SageMaker. 
 
 Thanks to these Repos:
-1. __ https://github.com/aws/amazon-sagemaker-examples/blob/master/advanced_functionality/scikit_bring_your_own/container/ReadMe.md
-2. __ https://github.com/giuseppeporcelli/sagemaker-custom-serving-containers/blob/49e0f373dbfe204996cc70100eae78dfb5653be3/nginx-gunicorn-flask-container/notebook/nginx-gunicorn-flask-container.ipynb
+1. https://github.com/aws/amazon-sagemaker-examples/blob/master/advanced_functionality/scikit_bring_your_own/container/ReadMe.md
+2. https://github.com/giuseppeporcelli/sagemaker-custom-serving-containers/blob/49e0f373dbfe204996cc70100eae78dfb5653be3/nginx-gunicorn-flask-container/notebook/nginx-gunicorn-flask-container.ipynb
 
 
 SageMaker supports two execution modes: _training_ where the algorithm uses input data to train a new model and _serving_ where the algorithm accepts HTTP requests and uses the previously trained model to do an inference (also called "scoring", "prediction", or "transformation").
@@ -55,16 +55,28 @@ can be supplied as part of the CreateModel API call.
 ## Command line
 Here are sample commands:
 
-> ./build.sh mmkv
-> ./start.sh mmkv
-> ./stop.sh mmkv
+```console
+foo@bar:~$ ./build.sh mmkv
+```
+
+```console
+foo@bar:~$ ./start.sh mmkv
+```
+
+```console
+foo@bar:~$ ./stop.sh mmkv
+```
+
 
 ## Issues
 * If cannot run sh commands above, make sure to set scripts as executable.
 
 For example:
 
-chmod +x ./build.sh
+```console
+foo@bar:~$ chmod +x ./build.sh
+```
+
 
 
 * If executing ./build_and_push.sh, make sure to have authenticated into AWS and credentials available / set in terminal used for executing these files. 
