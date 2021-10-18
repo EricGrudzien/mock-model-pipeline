@@ -7,7 +7,6 @@ FROM ubuntu:18.04
 # Required Label to allow multi-container
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
-
 RUN apt-get -y update && apt-get install -y --no-install-recommends \
          wget \
          python3-pip \
@@ -15,6 +14,7 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
          nginx \
          ca-certificates \
          curl \
+         gettext-base \
     && rm -rf /var/lib/apt/lists/*
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
@@ -26,6 +26,7 @@ RUN ln -s /usr/bin/pip3 /usr/bin/pip
 # a significant amount of space. These optimizations save a fair amount of space in the
 # image, which reduces start up time.
 RUN pip --no-cache-dir install numpy==1.16.2 scipy==1.2.1 scikit-learn==0.20.2 pandas flask gunicorn
+# RUN pip3 --no-cache-dir install sagemaker_inference
 
 # Set some environment variables. PYTHONUNBUFFERED keeps Python from buffering our standard
 # output stream, which means that logs can be delivered to the user quickly. PYTHONDONTWRITEBYTECODE

@@ -10,6 +10,7 @@ print("In predictor.py")
 
 # The flask app for serving predictions
 app = flask.Flask(__name__)
+app.config.from_pyfile('config.py')
 
 @app.route("/ping", methods=["GET"])
 def ping():

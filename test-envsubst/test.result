@@ -1,0 +1,14 @@
+This is a test replacement file.
+
+Note: this file (test.conf) gets over writen when using envsubst, so a second file, test.conf.template
+is used to hold the original content of test.conf.  
+
+Copy the contents of test.conf.template to test.conf, then run envsubst.
+
+I AM THE REPLACEMENT TEXT
+${DO_NOT_REPLACE_ME}
+
+
+example usage:
+% export  REPLACE_ME="I AM THE REPLACEMENT TEXT" VAR2="MEANINGLESS, no impact test.conf"
+% envsubst 'I AM THE REPLACEMENT TEXT ' < test.conf > test.result

@@ -30,6 +30,11 @@ The components are as follows:
 
 * __stop.sh__: A convenience script that stops a locally running container and removes the associate image
 
+* __mckv folder__: This folder contains the mock code to illustrate a Bring Your Own Code (BYOC) and Bring Your Own Container (BYOC) example. This example illustrates a Multi-Container solution.  The code is a rules engine based on a "Key-Value" JSON.  A "Value" only JSON could have been created, but an extra property added for completeness
+
+* __notebooks folder__: Contains 2 notebooks for use in SageMaker.  One notebook is an example of a single model, deployed to a SageMaker endpoint.  The second notebook is an example of a SageMaker Inference Pipeline, where multiple BYOC containers are chained together in a serial configuration.
+
+* __test-envsubt folder__: A directory that illustrates and verifies the envsubst command. 
 ### The application run inside the container
 
 When SageMaker starts a container, it will invoke the container with an argument of either __train__ or __serve__. We have set this container up so that the argument in treated as the command that the container executes. When training, it will run the __train__ program included and, when serving, it will run the __serve__ program.
@@ -56,15 +61,15 @@ can be supplied as part of the CreateModel API call.
 Here are sample commands:
 
 ```console
-foo@bar:~$ ./build.sh mmkv
+foo@bar:~$ ./build.sh mckv
 ```
 
 ```console
-foo@bar:~$ ./start.sh mmkv
+foo@bar:~$ ./start.sh mckv
 ```
 
 ```console
-foo@bar:~$ ./stop.sh mmkv
+foo@bar:~$ ./stop.sh mckv
 ```
 
 
@@ -78,8 +83,8 @@ foo@bar:~$ chmod +x ./build.sh
 ```
 
 
-
 * If executing ./build_and_push.sh, make sure to have authenticated into AWS and credentials available / set in terminal used for executing these files. 
+
 
 
 [skl]: http://scikit-learn.org "scikit-learn Home Page"
@@ -88,4 +93,4 @@ foo@bar:~$ chmod +x ./build.sh
 [nginx]: http://nginx.org/
 [gunicorn]: http://gunicorn.org/
 [flask]: http://flask.pocoo.org/
-# mock-model-pipeline
+

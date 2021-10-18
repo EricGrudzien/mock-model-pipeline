@@ -19,7 +19,13 @@ http {
   }
 
   server {
-    listen 8080 deferred;
+    # Note, the value "PORT_REPLACE_VALUE" is an arbitrary value,
+    # created and selected to for the purpose of the command envsubst.  
+    # This is user defined string could be change to any text 
+    # replacement target string - but if changed, 
+    # please update the appropriate code in the serve script.
+
+    listen ${PORT_REPLACEMENT_VALUE} deferred;
     client_max_body_size 5m;
 
     error_log /var/logs/nginx/error.log debug;

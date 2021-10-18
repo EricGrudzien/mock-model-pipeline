@@ -1,0 +1,126 @@
+#!/usr/bin/env python
+
+# This file implements the scoring service shell. You don't necessarily need to modify it for various
+# algorithms. It starts nginx and gunicorn with the correct configurations and then simply waits until
+# gunicorn exits.
+#
+# The flask server is specified to be the app object in wsgi.py
+#
+# We set the following parameters:
+#
+# Parameter                Environment Variable              Default Value
+# ---------                --------------------              -------------
+# number of workers        MODEL_SERVER_WORKERS              the number of CPU cores
+# timeout                  MODEL_SERVER_TIMEOUT              60 seconds
+
+import multiprocessing
+import os
+import signal
+import subprocess
+import sys
+
+DEFAULT_HTTP_PORT = "8080"
+
+# Note:  This is the string name of the replacement symbol found in the 
+# subprocess.run(['envsubst','${PORT_REPLACEMENT_VALUE}'] below.
+# In this case, "PORT_REPLACEMENT_VALUE" is the symbol targeted for replacement,
+# used in the nginx.conf.template file 
+REPLACEMENT_VALUE_SYMBOL_NAME = "PORT_REPLACEMENT_VALUE"
+
+# SageMaker sets SAGEMAKER_BIND_TO_PORT to the port on which the container needs
+# to listen to requests.  To make this dynamic, we should first read this enviroment 
+# variable, and it not present, default to 8080
+SAGEMAKER_BIND_TO_PORT_ENV = "SAGEMAKER_BIND_TO_PORT"
+
+cpu_count = multiprocessing.cpu_count()
+
+model_server_timeout = os.environ.get('MODEL_SERVER_TIMEOUT', 60)
+model_server_workers = int(os.environ.get('MODEL_SERVER_WORKERS', cpu_count))
+
+print("Enter serve script")
+
+def _init():
+    # Write this information to logs, for confirmation.
+    print('Obtain SageMaker bind to host port value')
+    os.environ[REPLACEMENT_VALUE_SYMBOL_NAME] = os.environ.get(SAGEMAKER_BIND_TO_PORT_ENV, DEFAULT_HTTP_PORT)
+    print('SAGEMAKER_BIND_TO_PORT value: ' + os.environ[SAGEMAKER_BIND_TO_PORT_ENV])
+    print('Symbol replacement value (which may or may not be the SAGEMAKER_BIND_TO_PORT value ): ' + os.environ[REPLACEMENT_VALUE_SYMBOL_NAME])
+
+    # This code is for historical purposes, and an example of how to extract
+    # BIND_TO_PORT_ENV value using the SageMaker Inference Toolkit
+
+    # try:
+    #     if parameters is None: # The variable
+    #         print('It is None')
+    #         self._inference_http_port = DEFAULT_HTTP_PORT 
+    # except NameError:
+    #     print ("This variable is not defined")
+    #     self._inference_http_port = DEFAULT_HTTP_PORT
+    # else:
+    #     print ("It is defined and has a value")
+    #     print('parameters.BIND_TO_PORT_ENV: ' + parameters.BIND_TO_PORT_ENV)
+    #     self._inference_http_port = os.environ.get(parameters.BIND_TO_PORT_ENV, DEFAULT_HTTP_PORT)
+    
+    # print('self._inference_http_port: ' + self._inference_http_port)
+    # replacement = '${' + self._inference_http_port + '}'
+    # print('replacement: ' + replacement)
+
+    # This block replaces the user defined string, "PORT_REPLACE_VALUE", in
+    # in the config template, and writes a new nginx.conf. This allows for
+    # dynamically setting ports on the nginx server.
+    template_file = open('nginx.conf.template')
+    conf_file = open('nginx.conf', 'w')
+    p = subprocess.run(['envsubst','${PORT_REPLACEMENT_VALUE}'], stdin=template_file, stdout=conf_file, stderr=subprocess.PIPE, env=os.environ.copy() )
+    conf_file.flush()
+
+def sigterm_handler(nginx_pid, gunicorn_pid):
+    print("sigterm called")
+    try:
+        os.kill(nginx_pid, signal.SIGQUIT)
+        print("nginx killed")
+    except OSError as error_n:
+        print("except OSError, nginx")
+        print("error: " + error_n)
+        pass
+    try:
+        os.kill(gunicorn_pid, signal.SIGTERM)
+        print("gunicorn killed")
+    except OSError as error_g:
+        print("except OSError, gunicorn")
+        print("error: " + error_g)
+        pass
+
+    sys.exit(0)
+
+def start_server():
+    print('Starting the inference server with {} workers.'.format(model_server_workers))
+
+    # link the log streams to stdout/err so they will be logged to the container logs
+    subprocess.check_call(['ln', '-sf', '/dev/stdout', '/var/log/nginx/access.log'])
+    subprocess.check_call(['ln', '-sf', '/dev/stderr', '/var/log/nginx/error.log'])
+
+    nginx = subprocess.Popen(['nginx', '-c', '/opt/program/nginx.conf'])
+    gunicorn = subprocess.Popen(['gunicorn',
+                                 '--timeout', str(model_server_timeout),
+                                 '-k', 'sync',
+                                 '-b', 'unix:/tmp/gunicorn.sock',
+                                 '-w', str(model_server_workers),
+                                 'wsgi:app'])
+
+    signal.signal(signal.SIGTERM, lambda a, b: sigterm_handler(nginx.pid, gunicorn.pid))
+
+    # If either subprocess exits, so do we.
+    pids = set([nginx.pid, gunicorn.pid])
+    while True:
+        pid, _ = os.wait()
+        if pid in pids:
+            break
+
+    sigterm_handler(nginx.pid, gunicorn.pid)
+    print('Inference server exiting')
+
+# The main routine just invokes the start function.
+
+if __name__ == '__main__':
+    _init()
+    start_server()
