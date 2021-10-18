@@ -42,8 +42,15 @@ print("Enter serve script")
 def _init():
     # Write this information to logs, for confirmation.
     print('Obtain SageMaker bind to host port value')
-    os.environ[REPLACEMENT_VALUE_SYMBOL_NAME] = os.environ.get(SAGEMAKER_BIND_TO_PORT_ENV, DEFAULT_HTTP_PORT)
-    print('SAGEMAKER_BIND_TO_PORT value: ' + os.environ[SAGEMAKER_BIND_TO_PORT_ENV])
+
+    try:
+        os.environ[REPLACEMENT_VALUE_SYMBOL_NAME] = os.environ.get(SAGEMAKER_BIND_TO_PORT_ENV, DEFAULT_HTTP_PORT)
+        print('SAGEMAKER_BIND_TO_PORT value: ' + os.environ[SAGEMAKER_BIND_TO_PORT_ENV])
+    except KeyError:
+        print('SAGEMAKER BIND_TO_PORT not found.  Defaulting value.')
+        os.environ[REPLACEMENT_VALUE_SYMBOL_NAME] = DEFAULT_HTTP_PORT
+    
+    #os.environ[REPLACEMENT_VALUE_SYMBOL_NAME] = os.environ.get(SAGEMAKER_BIND_TO_PORT_ENV, DEFAULT_HTTP_PORT)
     print('Symbol replacement value (which may or may not be the SAGEMAKER_BIND_TO_PORT value ): ' + os.environ[REPLACEMENT_VALUE_SYMBOL_NAME])
 
     # This code is for historical purposes, and an example of how to extract
@@ -70,6 +77,7 @@ def _init():
     # dynamically setting ports on the nginx server.
     template_file = open('nginx.conf.template')
     conf_file = open('nginx.conf', 'w')
+    # Note, "PORT_REPLACEMENT_VALUE" matches verbatim nginx.conf.template
     p = subprocess.run(['envsubst','${PORT_REPLACEMENT_VALUE}'], stdin=template_file, stdout=conf_file, stderr=subprocess.PIPE, env=os.environ.copy() )
     conf_file.flush()
 
